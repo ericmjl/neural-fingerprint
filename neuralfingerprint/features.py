@@ -1,6 +1,34 @@
 import autograd.numpy as np
+import networkx as nx
 from rdkit import Chem
 from util import one_of_k_encoding, one_of_k_encoding_unk
+
+
+def aa_features(aa_node, pin_graph):
+    """
+    Returns an array of encoded features from each amino acid node.
+
+    Parameters:
+    ===========
+    - aa_node:      A NetworkX node from a Protein Interaction Graph.
+    - pin_graph:    The Protein Interaction Graph's graph object, accessed
+                    through the ProteinInteractionNetwork.masterG attribute.
+
+    Returns:
+    ========
+    - an concatenated numpy array of encoded features, encompassing:
+        - one-of-K encoding for amino acid identity at that node [23 cells]
+        - the node degree, i.e. the number of other nodes it is connected to
+          [1 cell]
+        - the sum of all distances on each edge connecting those nodes [1 cell]
+        - the molecular weight of the amino acid [1 cell]
+        - the pKa of the amino acid [1 cell]
+
+    Note to future self: Add more features as you think of them!
+    """
+    
+
+
 
 def atom_features(atom):
     return np.array(one_of_k_encoding_unk(atom.GetSymbol(),
