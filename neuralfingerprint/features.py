@@ -4,31 +4,40 @@ from rdkit import Chem
 from util import one_of_k_encoding, one_of_k_encoding_unk
 
 
-def aa_features(aa_node, pin_graph):
+def aa_features(aa_node, pinG):
     """
     Returns an array of encoded features from each amino acid node.
 
     Parameters:
     ===========
     - aa_node:      A NetworkX node from a Protein Interaction Graph.
-    - pin_graph:    The Protein Interaction Graph's graph object, accessed
+    - pinG:         The Protein Interaction Network's graph object, accessed
                     through the ProteinInteractionNetwork.masterG attribute.
 
     Returns:
     ========
     - an concatenated numpy array of encoded features, encompassing:
         - one-of-K encoding for amino acid identity at that node [23 cells]
-        - the node degree, i.e. the number of other nodes it is connected to
-          [1 cell]
-        - the sum of all distances on each edge connecting those nodes [1 cell]
         - the molecular weight of the amino acid [1 cell]
         - the pKa of the amino acid [1 cell]
+        - the node degree, i.e. the number of other nodes it is connected to
+          [1 cell] (#nts: not sure if this is necessary.)
+        - the sum of all euclidean distances on each edge connecting those
+          nodes [1 cell]
 
     Note to future self: Add more features as you think of them!
     """
-    
-
-
+    # Here are the features encoded, in order.
+    # - One-of-K encoding for amino acid identity
+    aa_enc = one_of_k_encoding(pinG.node[aa_node]['aa'], amino_acids)
+    # - Integer value of node degree
+    node_degree = nx.degree(pinG)[aa]
+    # - The sum of distances on each edge connecting those nodes.
+    neighbors = nx.neighbors(pinG, aa_node)
+    distances = []
+    for neighbor in neighbors:
+        distance = pinG.edge[aa][neighbor]['distance']  # this has to be added into pin.py
+    ##### TO BE CONTINUED #####
 
 def atom_features(atom):
     return np.array(one_of_k_encoding_unk(atom.GetSymbol(),

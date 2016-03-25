@@ -10,21 +10,28 @@ from build_vanilla_net import build_fingerprint_deep_net, relu, batch_normalize
 def fast_array_from_list(xs):
     return np.concatenate([np.expand_dims(x, axis=0) for x in xs], axis=0)
 
+
 def sum_and_stack(features, idxs_list_of_lists):
-    return fast_array_from_list([np.sum(features[idx_list], axis=0) for idx_list in idxs_list_of_lists])
+    return fast_array_from_list([np.sum(features[idx_list], axis=0) for
+        idx_list in idxs_list_of_lists])
+
 
 def softmax(X, axis=0):
     return np.exp(X - logsumexp(X, axis=axis, keepdims=True))
 
+
 def matmult_neighbors(array_rep, atom_features, bond_features, get_weights):
     activations_by_degree = []
+    # Iterate over the total number of possible degrees in the molecular graph.
+    # 11 March 2016 - I think this should be extended to be variable.
     for degree in degrees:
         atom_neighbors_list = array_rep[('atom_neighbors', degree)]
         bond_neighbors_list = array_rep[('bond_neighbors', degree)]
         if len(atom_neighbors_list) > 0:
             neighbor_features = [atom_features[atom_neighbors_list],
                                  bond_features[bond_neighbors_list]]
-            # dims of stacked_neighbors are [atoms, neighbors, atom and bond features]
+            # dims of stacked_neighbors are [atoms, neighbors, atom and bond
+            # features]
             stacked_neighbors = np.concatenate(neighbor_features, axis=2)
             summed_neighbors = np.sum(stacked_neighbors, axis=1)
             activations = np.dot(summed_neighbors, get_weights(degree))
@@ -33,20 +40,36 @@ def matmult_neighbors(array_rep, atom_features, bond_features, get_weights):
     # in Node.graph_from_smiles_tuple()
     return np.concatenate(activations_by_degree, axis=0)
 
+
 def weights_name(layer, degree):
     return "layer " + str(layer) + " degree " + str(degree) + " filter"
 
-def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
-                                  normalize=True, activation_function=relu,
-                                  return_atom_activations=False):
-    """Sets up functions to compute convnets over all molecules in a minibatch together."""
 
+def build_convnet_fingerprint_fun(num_hidden_features=[100, 100],
+                                  fp_length=512, normalize=True,
+                                  activation_function=relu,
+                                  return_atom_activations=False):
+    """
+    Sets up functions to compute convnets over all molecules in a minibatch
+    together.
+
+    Parameters:
+    ===========
+    - num_hidden_features: (list) a list of the number of hidden features.
+    - fp_leangth: (int)
+    - normalize: (bool)
+    - activation_function: (function)
+    - return_atom_activations: (bool)
+    """
     # Specify weight shapes.
     parser = WeightsParser()
     all_layer_sizes = [num_atom_features()] + num_hidden_features
     for layer in range(len(all_layer_sizes)):
-        parser.add_weights(('layer output weights', layer), (all_layer_sizes[layer], fp_length))
-        parser.add_weights(('layer output bias', layer),    (1, fp_length))
+        parser.add_weights(('layer output weights', layer),
+                           (all_layer_sizes[layer], fp_length))
+
+        parser.add_weights(('layer output bias', layer),
+                           (1, fp_length))
 
     in_and_out_sizes = zip(all_layer_sizes[:-1], all_layer_sizes[1:])
     for layer, (N_prev, N_cur) in enumerate(in_and_out_sizes):
@@ -110,7 +133,10 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
 
 @memoize
 def array_rep_from_smiles(smiles):
-    """Precompute everything we need from MolGraph so that we can free the memory asap."""
+    """
+    Precompute everything we need from MolGraph so that we can free the memory.
+    """
+    # Redesign - I think the API should explicitly take in a graph object.
     molgraph = graph_from_smiles_tuple(smiles)
     arrayrep = {'atom_features' : molgraph.feature_array('atom'),
                 'bond_features' : molgraph.feature_array('bond'),
@@ -124,7 +150,15 @@ def array_rep_from_smiles(smiles):
     return arrayrep
 
 def build_conv_deep_net(conv_params, net_params, fp_l2_penalty=0.0):
-    """Returns loss_fun(all_weights, smiles, targets), pred_fun, combined_parser."""
+    """
+    Returns loss_fun(all_weights, smiles, targets), pred_fun, combined_parser.
+
+    Parameters:
+    ===========
+    - conv_params:
+    - net_params:
+    - fp_l2_penalty:
+    """
     conv_fp_func, conv_parser = build_convnet_fingerprint_fun(**conv_params)
     return build_fingerprint_deep_net(net_params, conv_fp_func, conv_parser, fp_l2_penalty)
 

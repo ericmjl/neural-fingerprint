@@ -1,4 +1,5 @@
 import numpy as np
+import networkx as nx
 from rdkit.Chem import MolFromSmiles
 from features import atom_features, bond_features
 
@@ -40,6 +41,19 @@ class MolGraph(object):
         return np.array([node.rdkit_ix for node in self.nodes['atom']])
 
     def neighbor_list(self, self_ntype, neighbor_ntype):
+        """
+        Returns the neighbors that are of the same type.
+
+        Parameters:
+        ===========
+        - self_ntype: 
+        - neighbor_ntype:
+
+        Returns:
+        ========
+        ## oh man, this is a bit complicated...
+        - (list of lists of dictionaries) of...
+        """
         assert self_ntype in self.nodes and neighbor_ntype in self.nodes
         neighbor_idxs = {n : i for i, n in enumerate(self.nodes[neighbor_ntype])}
         return [[neighbor_idxs[neighbor]
